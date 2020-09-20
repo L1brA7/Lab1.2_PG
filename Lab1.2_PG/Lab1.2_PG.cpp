@@ -73,7 +73,7 @@ struct DATE {
 
 tuple<DATE*, int> array_construct();
 tuple<DATE*, int> array_filter(DATE* NF_D_ARR, int N);
-
+void GEN_OP(DATE* D_ARR, int i, int N);
 
 int main() {
     DATE *D_ARR;
@@ -81,12 +81,15 @@ int main() {
     tie(D_ARR, N) = array_construct();
     
     for(int i = 0; i < N; i++) {
-        printf("%i) ", i + 1);
-        D_ARR[i].output();
-        D_ARR[i].prev_date(D_ARR, i);
-        D_ARR[i].next_date(D_ARR, i, N);
-        printf("\n");
+        GEN_OP(D_ARR, i, N);
     }
+
+    for (int i = 1; i < N - 1; i++) {
+        if (D_ARR[i].year == D_ARR[i - 1].year && D_ARR[i].year == D_ARR[i + 1].year) {
+            GEN_OP(D_ARR, i, N);
+        }
+    }
+
     return 0;
 }
 
@@ -140,4 +143,12 @@ tuple<DATE*, int> array_filter(DATE *NF_D_ARR, int N) {
         }
     }
     return make_tuple(D_ARR, newN);
+}
+
+void GEN_OP(DATE *D_ARR, int i, int N) {
+    printf("%i) ", i + 1);
+    D_ARR[i].output();
+    D_ARR[i].prev_date(D_ARR, i);
+    D_ARR[i].next_date(D_ARR, i, N);
+    printf("\n");
 }
