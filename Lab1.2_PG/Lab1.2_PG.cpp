@@ -6,6 +6,10 @@
 
 using namespace std;
 
+regex DATE_REGEX("(([0-2][1-9]|30)[-./](0[469]|11)[-./]([0-9]*))|(([0-2][1-9]|3[0-1])[-./](0[1358]|1[02])[-./]([0-9]*))|(([0-2][1-9])[-./]02[-./]([0-9]*))");
+
+bool leap_check(int year);
+
 struct DATE {
     int day;
     int month;
@@ -21,10 +25,8 @@ struct DATE {
         day = (dateline[0] - '0') * 10 + dateline[1] - '0';
         month = (dateline[3] - '0') * 10 + dateline[4] - '0';
         year = stoi(year_n);
-        if (year % 100 == 0) {
-            if (year % 400 == 0) leap = true;
-        }
-        else if (year % 4 == 0) leap = true;
+        
+        leap = leap_check(year);
 
         if (month == 2) {
             if (leap == false && day == 29) {
@@ -53,66 +55,76 @@ struct DATE {
 
     printf("%s", DATEline.c_str());
     }
-    void next_date(DATE *D_ARR, int i, int N) {
-        if(i < N - 1) {
-            D_ARR[i+1].output();
-        }
-        else {
-            printf(" LAST ONE");
-        }
-    }
-    void prev_date(DATE *D_ARR, int i) {
-        if(i != 0) {
-            D_ARR[i-1].output();
-        }
-        else {
-            printf(" FIRST ONE ");
-        }
-    }
+    
 };
 
 tuple<DATE*, int> array_construct();
 tuple<DATE*, int> array_filter(DATE* NF_D_ARR, int N);
+DATE next_date(DATE date);
+DATE prev_date(DATE date);
 void GEN_OP(DATE* D_ARR, int i, int N);
+void time_travel_forward(DATE date);
 
 int main() {
-    DATE *D_ARR;
+    DATE *D_ARR, ST_DATE;
+    string STARTING_DATE;
     int N;
     tie(D_ARR, N) = array_construct();
     
     for(int i = 0; i < N; i++) {
         GEN_OP(D_ARR, i, N);
     }
-
-    for (int i = 1; i < N - 1; i++) {
-        if (D_ARR[i].year == D_ARR[i - 1].year && D_ARR[i].year == D_ARR[i + 1].year) {
+    printf("\n");
+    for (int i = 0; i < N; i++) {
+        if ((D_ARR[i].month != 12 && D_ARR[i].day != 31) && (D_ARR[i].month != 1 && D_ARR[i].day != 1)) {
             GEN_OP(D_ARR, i, N);
         }
     }
-
+    printf("\n");
+    cout << "Pls enter the starting date to time travel forward(xx.xx.xxxx or with any other delimeter and year) - ";
+    cin >> STARTING_DATE;
+    while (regex_match(STARTING_DATE, DATE_REGEX) != true) {
+        cout << "Pls enter valid date - ";
+        cin >> STARTING_DATE;
+    }
+    ST_DATE.construct(STARTING_DATE);
+    while (ST_DATE.day == 0) {
+        cout << "Pls enter valid date - ";
+        cin >> STARTING_DATE;
+        while (regex_match(STARTING_DATE, DATE_REGEX) != true) {
+            cout << "Pls enter valid date - ";
+            cin >> STARTING_DATE;
+        }
+        ST_DATE.construct(STARTING_DATE);
+    }
+    time_travel_forward(ST_DATE);
     return 0;
 }
 
 tuple<DATE*, int> array_construct() {
     ifstream DATES;
     string dateline;
-    regex DATE_REGEX("(([0-2][1-9]|30)[-./](0[469]|11)[-./]([0-9]*))|(([0-2][1-9]|3[0-1])[-./](0[1358]|1[02])[-./]([0-9]*))|(([0-2][1-9])[-./]02[-./]([0-9]*))");
-    int N = 0, i = 0;   
+    
+    int N = 0, i = 1;   
     
     DATES.open("dates.txt");
     while(getline(DATES, dateline)) {
         if (regex_match(dateline, DATE_REGEX)) {
             N++;
         }
+        else {
+            printf("REGEX ERROR LINE %i\n", i);
+        }
+        i++;
     }
+    printf("\n");
     DATE *D_ARR = new DATE[N];
     DATE *NF_D_ARR = new DATE[N];
-
+    i = 0;
     DATES.close();
     DATES.open("dates.txt");
 
     while(getline(DATES, dateline)) {
-        
         if (regex_match(dateline, DATE_REGEX)) {
             NF_D_ARR[i].construct(dateline);
             i++;
@@ -145,10 +157,140 @@ tuple<DATE*, int> array_filter(DATE *NF_D_ARR, int N) {
     return make_tuple(D_ARR, newN);
 }
 
+DATE next_date(DATE date) {
+    date.day += 1;
+    date.leap = leap_check(date.year);
+    if(date.month == 2) { 
+        if(date.day > (28 + (date.leap))) {
+            date.month++;
+            if(date.month > 12) {
+                date.year++;
+                date.month = 1;
+                date.leap = leap_check(date.year);
+            }
+            date.day = 1;
+        }
+    }
+    else {
+        if (date.month < 8) {
+            if(date.day > (30 + date.month % 2)) {
+                date.month++;
+                if(date.month > 12) {
+                    date.year++;
+                    date.month = 1;
+                    date.leap = leap_check(date.year);
+                }
+                date.day = 1;
+            }
+        }
+        else {
+            if(date.day > (31 - date.month % 2)) {
+                date.month++;
+                if(date.month > 12) {
+                    date.year++;
+                    date.month = 1;
+                    date.leap = leap_check(date.year);
+                }
+                date.day = 1;
+            }
+        }
+    }
+    return date;
+}
+
+DATE prev_date(DATE date) {
+    date.day -= 1;
+    date.leap = leap_check(date.year);
+    if (date.day == 0) {
+        if (date.month == 3) {
+            date.day = 28 + date.leap;
+            date.month -= 1;
+        }
+        else {
+            if (date.month < 8) {
+                if (date.month == 1) {
+                    date.day = 31;
+                    date.month = 12;
+                    date.year--;
+                    date.leap = leap_check(date.year);
+                }
+                else {
+                    date.month--;
+                    date.day = 30 + date.month % 2;
+                }
+            }
+            else {
+                date.month--;
+                date.day = 31 - date.month % 2;
+            }
+        }
+    }
+    return date;
+}
+
 void GEN_OP(DATE *D_ARR, int i, int N) {
     printf("%i) ", i + 1);
     D_ARR[i].output();
-    D_ARR[i].prev_date(D_ARR, i);
-    D_ARR[i].next_date(D_ARR, i, N);
+    prev_date(D_ARR[i]).output();
+    next_date(D_ARR[i]).output();
     printf("\n");
+}
+
+bool leap_check(int year) {
+    bool leap = false;
+    if (year % 100 == 0) {
+        if (year % 400 == 0) leap = true;
+    }
+    else {
+        if (year % 4 == 0) leap = true;
+    }
+    return leap;
+}
+
+void time_travel_forward(DATE date) {
+
+    int days;
+    printf("Enter the amount of days to add: ");
+    cin >> days;
+
+    while (days > 0) {
+        date.day++;
+        if (date.month == 2) {
+            if (date.day > (28 + (date.leap))) {
+                date.month++;
+                if (date.month > 12) {
+                    date.year++;
+                    date.month = 1;
+                    date.leap = leap_check(date.year);
+                }
+                date.day = 1;
+            }
+        }
+        else {
+            if (date.month < 8) {
+                if (date.day > (30 + date.month % 2)) {
+                    date.month++;
+                    if (date.month > 12) {
+                        date.year++;
+                        date.month = 1;
+                        date.leap = leap_check(date.year);
+                    }
+                    date.day = 1;
+                }
+            }
+            else {
+                if (date.day > (31 - date.month % 2)) {
+                    date.month++;
+                    if (date.month > 12) {
+                        date.year++;
+                        date.month = 1;
+                        date.leap = leap_check(date.year);
+                    }
+                    date.day = 1;
+                }
+            }
+        }
+        days--;
+    }
+    date.output();
 }
