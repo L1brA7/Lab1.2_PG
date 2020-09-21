@@ -73,7 +73,6 @@ void task1(DATE *D_ARR, int N);
 void task2(DATE *D_ARR, int N);
 
 int main() {
-
     DATE *D_ARR, ST_DATE;
     string STARTING_DATE;
     int N;
