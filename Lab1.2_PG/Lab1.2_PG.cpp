@@ -6,8 +6,9 @@
 
 using namespace std;
 
-regex DATE_REGEX("(([0-2][1-9]|30)[-./](0[469]|11)[-./]([0-9]*))|(([0-2][1-9]|3[0-1])[-./](0[1358]|1[02])[-./]([0-9]*))|(([0-2][1-9])[-./]02[-./]([0-9]*))");
+regex DATE_REGEX("(([0-2][1-9]|30)[-./](0[469]|11)[-./][1-9]([0-9]*))|(([0-2][1-9]|3[0-1])[-./](0[1358]|1[02])[-./][1-9]([0-9]*))|(([0-2][1-9])[-./]02[-./][1-9]([0-9]*))");
 
+void num_changer(int &number);
 bool leap_check(int year);
 
 struct DATE {
@@ -60,45 +61,40 @@ struct DATE {
 
 tuple<DATE*, int> array_construct();
 tuple<DATE*, int> array_filter(DATE* NF_D_ARR, int N);
+void ZDC(DATE &date); //zero day case
+void LDC(DATE &date); //last day case
 DATE next_date(DATE date);
 DATE prev_date(DATE date);
 void GEN_OP(DATE* D_ARR, int i, int N);
 void time_travel_forward(DATE date);
+void time_travel_backward(DATE date);
+DATE ST_DATE_IN(string diraction);
+void task1(DATE *D_ARR, int N);
+void task2(DATE *D_ARR, int N);
 
 int main() {
+
     DATE *D_ARR, ST_DATE;
     string STARTING_DATE;
     int N;
     tie(D_ARR, N) = array_construct();
-    
-    for(int i = 0; i < N; i++) {
-        GEN_OP(D_ARR, i, N);
+    int number;
+	num_changer(number);
+	while (number) {
+		if (number == 1) task1(D_ARR, N);
+        if (number == 2) task2(D_ARR, N); 
+        if (number == 3) time_travel_forward(ST_DATE_IN("forward"));
+        if (number == 4) time_travel_backward(ST_DATE_IN("backward"));
+        num_changer(number);
+        printf("\n");
     }
-    printf("\n");
-    for (int i = 0; i < N; i++) {
-        if ((D_ARR[i].month != 12 && D_ARR[i].day != 31) && (D_ARR[i].month != 1 && D_ARR[i].day != 1)) {
-            GEN_OP(D_ARR, i, N);
-        }
-    }
-    printf("\n");
-    cout << "Pls enter the starting date to time travel forward(xx.xx.xxxx or with any other delimeter and year) - ";
-    cin >> STARTING_DATE;
-    while (regex_match(STARTING_DATE, DATE_REGEX) != true) {
-        cout << "Pls enter valid date - ";
-        cin >> STARTING_DATE;
-    }
-    ST_DATE.construct(STARTING_DATE);
-    while (ST_DATE.day == 0) {
-        cout << "Pls enter valid date - ";
-        cin >> STARTING_DATE;
-        while (regex_match(STARTING_DATE, DATE_REGEX) != true) {
-            cout << "Pls enter valid date - ";
-            cin >> STARTING_DATE;
-        }
-        ST_DATE.construct(STARTING_DATE);
-    }
-    time_travel_forward(ST_DATE);
     return 0;
+}
+
+void num_changer(int &N) {
+    printf("\n");
+	cout << "Enter the number or 0 to close - ";
+	cin >> N;
 }
 
 tuple<DATE*, int> array_construct() {
@@ -157,9 +153,34 @@ tuple<DATE*, int> array_filter(DATE *NF_D_ARR, int N) {
     return make_tuple(D_ARR, newN);
 }
 
-DATE next_date(DATE date) {
-    date.day += 1;
-    date.leap = leap_check(date.year);
+void ZDC(DATE &date) {
+    if (date.day == 0) {
+        if (date.month == 3) {
+            date.day = 28 + date.leap;
+            date.month -= 1;
+        }
+        else {
+            if (date.month < 8) {
+                if (date.month == 1) {
+                    date.day = 31;
+                    date.month = 12;
+                    date.year--;
+                    date.leap = leap_check(date.year);
+                }
+                else {
+                    date.month--;
+                    date.day = 30 + date.month % 2;
+                }
+            }
+            else {
+                date.month--;
+                date.day = 31 - date.month % 2;
+            }
+        }
+    }
+}
+
+void LDC(DATE &date) {
     if(date.month == 2) { 
         if(date.day > (28 + (date.leap))) {
             date.month++;
@@ -195,36 +216,17 @@ DATE next_date(DATE date) {
             }
         }
     }
+}
+
+DATE next_date(DATE date) {
+    date.day += 1;
+    LDC(date);
     return date;
 }
 
 DATE prev_date(DATE date) {
     date.day -= 1;
-    date.leap = leap_check(date.year);
-    if (date.day == 0) {
-        if (date.month == 3) {
-            date.day = 28 + date.leap;
-            date.month -= 1;
-        }
-        else {
-            if (date.month < 8) {
-                if (date.month == 1) {
-                    date.day = 31;
-                    date.month = 12;
-                    date.year--;
-                    date.leap = leap_check(date.year);
-                }
-                else {
-                    date.month--;
-                    date.day = 30 + date.month % 2;
-                }
-            }
-            else {
-                date.month--;
-                date.day = 31 - date.month % 2;
-            }
-        }
-    }
+    ZDC(date);
     return date;
 }
 
@@ -247,6 +249,21 @@ bool leap_check(int year) {
     return leap;
 }
 
+void task1(DATE *D_ARR, int N) {
+    for(int i = 0; i < N; i++) {
+        GEN_OP(D_ARR, i, N);
+    }
+
+}
+
+void task2(DATE *D_ARR, int N) {
+    for (int i = 1; i < N - 1; i++) {
+        if (D_ARR[i].year == D_ARR[i - 1].year && D_ARR[i].year == D_ARR[i + 1].year){
+            GEN_OP(D_ARR, i, N);
+        }
+    }
+}
+
 void time_travel_forward(DATE date) {
 
     int days;
@@ -255,42 +272,43 @@ void time_travel_forward(DATE date) {
 
     while (days > 0) {
         date.day++;
-        if (date.month == 2) {
-            if (date.day > (28 + (date.leap))) {
-                date.month++;
-                if (date.month > 12) {
-                    date.year++;
-                    date.month = 1;
-                    date.leap = leap_check(date.year);
-                }
-                date.day = 1;
-            }
-        }
-        else {
-            if (date.month < 8) {
-                if (date.day > (30 + date.month % 2)) {
-                    date.month++;
-                    if (date.month > 12) {
-                        date.year++;
-                        date.month = 1;
-                        date.leap = leap_check(date.year);
-                    }
-                    date.day = 1;
-                }
-            }
-            else {
-                if (date.day > (31 - date.month % 2)) {
-                    date.month++;
-                    if (date.month > 12) {
-                        date.year++;
-                        date.month = 1;
-                        date.leap = leap_check(date.year);
-                    }
-                    date.day = 1;
-                }
-            }
-        }
+        LDC(date);
         days--;
     }
     date.output();
+}
+
+void time_travel_backward(DATE date) {
+
+    int days;
+    printf("Enter the amount of days to substruct: ");
+    cin >> days;
+    
+    while (days != 0) {
+        date.day--;
+        ZDC(date);
+        days--;
+    }
+    date.output();
+}
+DATE ST_DATE_IN(string diraction) {
+    DATE ST_DATE;
+    string STARTING_DATE;
+    cout << "Pls enter the starting date to time travel " + diraction + "(xx.xx.xxxx or with any other delimeter and year) - ";
+    cin >> STARTING_DATE;
+    while (regex_match(STARTING_DATE, DATE_REGEX) != true) {
+        cout << "Pls enter valid date - ";
+        cin >> STARTING_DATE;
+    }
+    ST_DATE.construct(STARTING_DATE);
+    while (ST_DATE.day == 0) {
+        cout << "Pls enter valid date - ";
+        cin >> STARTING_DATE;
+        while (regex_match(STARTING_DATE, DATE_REGEX) != true) {
+            cout << "Pls enter valid date - ";
+            cin >> STARTING_DATE;
+        }
+        ST_DATE.construct(STARTING_DATE);
+    }
+    return ST_DATE;
 }
