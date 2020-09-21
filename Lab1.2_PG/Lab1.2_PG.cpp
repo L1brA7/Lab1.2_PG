@@ -6,7 +6,7 @@
 
 using namespace std;
 
-regex DATE_REGEX("(([0-2][1-9]|30)[-./](0[469]|11)[-./][1-9]([0-9]*))|(([0-2][1-9]|3[0-1])[-./](0[1358]|1[02])[-./][1-9]([0-9]*))|(([0-2][1-9])[-./]02[-./][1-9]([0-9]*))");
+regex DATE_REGEX("(([0-2][1-9]|30)[-./](0[4679]|11)[-./][1-9]([0-9]*))|(([0-2][1-9]|3[0-1])[-./](0[1358]|1[02])[-./][1-9]([0-9]*))|(([0-2][1-9])[-./]02[-./][1-9]([0-9]*))");
 
 void num_changer(int &number);
 bool leap_check(int year);
@@ -258,7 +258,11 @@ void task1(DATE *D_ARR, int N) {
 void task2(DATE *D_ARR, int N) {
     for (int i = 1; i < N - 1; i++) {
         if (D_ARR[i].year == D_ARR[i - 1].year && D_ARR[i].year == D_ARR[i + 1].year){
-            GEN_OP(D_ARR, i, N);
+            printf("%i) ", i + 1);
+            D_ARR[i].output();
+            D_ARR[i + 1].output();
+            D_ARR[i - 1].output();
+            printf("\n");
         }
     }
 }
